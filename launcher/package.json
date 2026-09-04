@@ -81,7 +81,7 @@
     "linux": {
       "category": "Development",
       "icon": "assets/icon.png",
-      "target": ["AppImage"]
+      "target": ["AppImage, deb"]
     },
     "nsis": {
       "guid": "d1a6026a-6210-588e-9a2b-da3936f94e02",
