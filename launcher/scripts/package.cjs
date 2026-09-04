@@ -92,13 +92,13 @@ try {
 
   fs.mkdirSync(artifactsDirectory, { recursive: true });
   for (const entry of fs.readdirSync(artifactsDirectory, { withFileTypes: true })) {
-    if (entry.isFile() && /\.(?:AppImage|dmg|exe|zip|blockmap)$/i.test(entry.name)) {
+    if (entry.isFile() && /\.(?:AppImage|deb|dmg|exe|zip|blockmap)$/i.test(entry.name)) {
       fs.rmSync(path.join(artifactsDirectory, entry.name), { force: true });
     }
   }
   const artifacts = fs.readdirSync(staging, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /\.(?:AppImage|dmg|exe|zip|blockmap)$/i.test(entry.name));
-  if (!artifacts.some((entry) => /\.(?:AppImage|dmg|exe|zip)$/i.test(entry.name))) {
+    .filter((entry) => entry.isFile() && /\.(?:AppImage|deb|dmg|exe|zip|blockmap)$/i.test(entry.name));
+  if (!artifacts.some((entry) => /\.(?:AppImage|deb|dmg|exe|zip)$/i.test(entry.name))) {
     throw new Error(`electron-builder produced no distributable artifact in ${staging}`);
   }
   for (const artifact of artifacts) {
