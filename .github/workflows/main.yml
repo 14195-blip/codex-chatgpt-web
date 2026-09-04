@@ -1,0 +1,102 @@
+name: Build & Release Linux arm64
+
+on:
+  workflow_dispatch:                    # manual trigger
+    inputs:
+      version:
+        description: "Version tag (e.g. 5.0.1). Leave empty to use package.json version"
+        required: false
+        type: string
+  push:
+    tags:
+      - 'v*'                            # also runs when you push a v* tag
+
+permissions:
+  contents: write                       # needed to create releases
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-24.04-arm           # native aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun 1.4.0
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+
+      - name: Verify Bun version
+        run: |
+          bun --version
+          test "$(bun --version)" = "1.4.0"
+
+      - name: Install root dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install launcher dependencies
+        working-directory: launcher
+        run: bun install --frozen-lockfile
+
+      - name: Enable deb target
+        working-directory: launcher
+        run: |
+          # Temporarily add deb target so we get both AppImage and deb
+          node -e '
+            const fs = require("fs");
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            pkg.build.linux.target = ["AppImage", "deb"];
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
+          '
+
+      - name: Build Linux packages (AppImage + deb)
+        working-directory: launcher
+        run: bun run package:linux
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Collect artifacts
+        id: artifacts
+        run: |
+          mkdir -p dist
+          # electron-builder may put files in artifacts/ or release/
+          find launcher -type f \( -name "*.AppImage" -o -name "*.deb" \) -exec cp -v {} dist/ \;
+          ls -lh dist/
+          echo "count=$(ls dist/ | wc -l)" >> $GITHUB_OUTPUT
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
+
+      - name: Create GitHub Release and upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Linux arm64 ${{ steps.version.outputs.tag }}
+          body: |
+            Automated Linux **arm64** build.
+
+            Contains:
+            - AppImage
+            - deb package
+
+            Built on `ubuntu-24.04-arm` with Bun 1.4.0.
+          files: |
+            dist/*.AppImage
+            dist/*.deb
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
