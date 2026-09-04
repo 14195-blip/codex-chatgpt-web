@@ -3,7 +3,11 @@
   "version": "5.0.0",
   "private": true,
   "description": "Desktop control center for Codex ChatGPT Web",
-  "author": "miuuyy",
+  "homepage": "https://github.com/14195-blip/codex-chatgpt-web",
+  "author": {
+  "name": "ShinZero",
+  "email": "youssef2010.mahmoud@gmail.com"
+},
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -79,10 +83,11 @@
       "target": ["nsis"]
     },
     "linux": {
-      "category": "Development",
-      "icon": "assets/icon.png",
-      "target": ["AppImage, deb"]
-    },
+  "category": "Development",
+  "icon": "assets/icon.png",
+  "target": ["AppImage", "deb"],
+  "maintainer": "youssef2010.mahmoud@gmail.com"
+},
     "nsis": {
       "guid": "d1a6026a-6210-588e-9a2b-da3936f94e02",
       "oneClick": false,
