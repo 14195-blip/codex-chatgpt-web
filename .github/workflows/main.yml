@@ -39,17 +39,6 @@ jobs:
         working-directory: launcher
         run: bun install --frozen-lockfile
 
-      - name: Enable deb target
-        working-directory: launcher
-        run: |
-          # Temporarily add deb target so we get both AppImage and deb
-          node -e '
-            const fs = require("fs");
-            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-            pkg.build.linux.target = ["AppImage", "deb"];
-            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
-          '
-
       - name: Build Linux packages (AppImage + deb)
         working-directory: launcher
         run: bun run package:linux
